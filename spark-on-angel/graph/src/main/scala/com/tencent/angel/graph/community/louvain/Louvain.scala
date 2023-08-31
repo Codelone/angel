@@ -16,8 +16,11 @@
  */
 package com.tencent.angel.graph.community.louvain
 
+import com.tencent.angel.graph.utils.io.Log
 import com.tencent.angel.ml.math2.vector.{LongFloatVector, LongLongVector}
 import com.tencent.angel.graph.utils.params._
+import com.tencent.angel.spark.context.PSContext
+import org.apache.spark.SparkContext
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util.Identifiable
@@ -99,7 +102,8 @@ class Louvain(override val uid: String) extends Transformer
     val maxId = nodes.max()
     println("maxId is: " + maxId)
     val edges = rawEdges.map(x => (x._1._1, x._1._2, x._2))
-
+    Log.withTimePrintln("start to run ps")
+    PSContext.getOrCreate(SparkContext.getOrCreate())
     //build the graph with Louvain graph partition
     val graph: RDD[LouvainGraphPartition] = LouvainGraph.edgeTripleRDD2GraphPartitions(edges,
       storageLevel = $(storageLevel))
