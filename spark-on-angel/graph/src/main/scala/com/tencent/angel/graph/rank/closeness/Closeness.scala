@@ -19,7 +19,9 @@ package com.tencent.angel.graph.rank.closeness
 
 
 import com.tencent.angel.graph.common.param.ModelContext
+import com.tencent.angel.graph.utils.io.Log
 import com.tencent.angel.graph.utils.params._
+import com.tencent.angel.spark.context.PSContext
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.param.{BooleanParam, IntParam, ParamMap}
@@ -91,6 +93,9 @@ class Closeness(override val uid: String) extends Transformer
     val (minId, maxId, numEdges) = edges.mapPartitions(summarizeApplyOp).reduce(summarizeReduceOp)
 
     println(s"minId=$minId maxId=$maxId numEdges=$numEdges p=${$(p)} sp=${$(sp)}")
+    // Start PS and init the model
+    Log.withTimePrintln("start to run ps")
+    PSContext.getOrCreate(SparkContext.getOrCreate())
 
     val modelContext = new ModelContext($(psPartitionNum), minId, maxId + 1, -1, "closeness", SparkContext.getOrCreate().hadoopConfiguration)
     val model = ClosenessPSModel(modelContext, index, $(useBalancePartition), $(balancePartitionPercent))

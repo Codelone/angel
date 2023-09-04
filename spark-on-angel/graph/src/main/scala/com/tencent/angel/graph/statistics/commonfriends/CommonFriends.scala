@@ -19,6 +19,7 @@ package com.tencent.angel.graph.statistics.commonfriends
 import com.tencent.angel.graph.common.param.ModelContext
 import com.tencent.angel.graph.data.neighbor.NeighborDataOps
 import com.tencent.angel.graph.model.neighbor.simple.SimpleNeighborTableModel
+import com.tencent.angel.graph.utils.io.Log
 import com.tencent.angel.spark.context.PSContext
 import com.tencent.angel.graph.utils.params._
 import com.tencent.angel.graph.utils.{GraphIO, PartitionTools}
@@ -83,7 +84,9 @@ class CommonFriends(override val uid: String) extends Transformer
     val psStartTime = System.currentTimeMillis()
     startPS(dataset.sparkSession.sparkContext)
     println(s"start parameter server costs ${System.currentTimeMillis() - psStartTime} ms")
-
+    // Start PS and init the model
+    Log.withTimePrintln("start to run ps")
+    PSContext.getOrCreate(SparkContext.getOrCreate())
     println(s"======push neighbor tables to parameter server======")
     val initTableStartTime = System.currentTimeMillis()
     val modelContext = new ModelContext($(psPartitionNum), stats._1, stats._2 + 1, stats._3,
