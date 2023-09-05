@@ -37,29 +37,32 @@ class LPA(override val uid: String) extends Transformer
   def this() = this(Identifiable.randomUID("LPA"))
   
   override def transform(dataset: Dataset[_]): DataFrame = {
-    val edges = GraphIO.loadEdgesFromDF(dataset, $(srcNodeIdCol), $(dstNodeIdCol))
+    val edges = GraphIO.loadEdgesFromDF(dataset, $(srcNodeIdCol), $(dstNodeIdCol))  // 读取边数据
     edges.persist($(storageLevel))
     
-    val (minId, maxId, numEdges) = Stats.summarize(edges)
+    val (minId, maxId, numEdges) = Stats.summarize(edges)  // 统计数据 最小id， 最大id ， 边个数
     Log.withTimePrintln(s"minId=$minId maxId=$maxId numEdges=$numEdges level=${$(storageLevel)}")
     
     // Start PS and init the model
     Log.withTimePrintln("start to run ps")
     PSContext.getOrCreate(SparkContext.getOrCreate())
-    
+
+    // 构造lpa的模型
     val modelContext = new ModelContext($(psPartitionNum), minId, maxId, -1,
       "lpa", SparkContext.getOrCreate().hadoopConfiguration)
     val model = LPAPSModel(modelContext, edges, $(useBalancePartition), $(balancePartitionPercent))
   
     val loadGraphTime = System.currentTimeMillis()
+    // 这里看不懂  看逻辑是反向一下， 使图变为无向图  但是命名却是备份
     val newEdges = if ($(needReplicaEdge)) edges.flatMap(f => Iterator((f._1, f._2), (f._2, f._1))) else edges
-    var graph = newEdges
+
+    val graph = newEdges
       .groupByKey($(partitionNum))
       .mapPartitionsWithIndex((index, it) =>
         Iterator(LPAGraphPartition.apply(index, it)))
     
     graph.persist($(storageLevel))
-    graph.foreachPartition(_ => Unit)
+    graph.foreachPartition(_ => Unit) // action 开始执行，准备压缩邻接表数据
     println(s"make graph partitions cost: ${(System.currentTimeMillis() - loadGraphTime) / 1000.0} s")
   
     graph.foreach(_.initMsgs(model, $(batchSize)))
@@ -77,10 +80,11 @@ class LPA(override val uid: String) extends Transformer
       Log.withTimePrintln(s"LPA finished iteration $curIteration; $changedNum  nodes changed lpa label, " +
         s"cost: ${(System.currentTimeMillis() - iterationTime) / 1000.0} s")
     } while (curIteration < maxIterNum && changedNum != 0)
-  
-    val retRDD = graph.flatMap(_.save(model, $(batchSize)))
+
+    val retRDD = graph.flatMap(_.save(model, $(batchSize))) // 需要从angel中取出来结果
       .sortBy(_._2)
       .map(f => Row.fromSeq(Seq[Any](f._1, f._2)))
+
     
     dataset.sparkSession.createDataFrame(retRDD, transformSchema(dataset.schema))
   }

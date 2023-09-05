@@ -87,7 +87,7 @@ class WeightedHIndex(override val uid: String) extends Transformer
 
     val numMsgs = model.numMsgs()
     println(s"numNodes=$numMsgs")
-    model.checkpoint()
+//    model.checkpoint()
 
     val res = neighborTable.mapPartitionsWithIndex { case (index, iter) =>
       WeightedHIndexOperator.process(index, iter, model, ${pullBatchSize})

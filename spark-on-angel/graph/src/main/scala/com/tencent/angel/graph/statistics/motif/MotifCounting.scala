@@ -69,7 +69,7 @@ class MotifCounting(override val uid: String) extends Transformer
     // Write checkpoint for model on PS
     val cpTableStartTime = System.currentTimeMillis()
     println(s"checkpoint neighbor table")
-    model.checkpoint()
+//    model.checkpoint()
     println(s"checkpoint costs ${System.currentTimeMillis() - cpTableStartTime} ms")
 
     // Calculate triangle count

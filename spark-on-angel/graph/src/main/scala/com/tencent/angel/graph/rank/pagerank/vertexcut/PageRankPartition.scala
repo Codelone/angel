@@ -27,11 +27,12 @@ import java.util.{Arrays => JArrays}
 
 private[vertexcut]
 class PageRankPartition(index: Int,
-                        srcs: Array[Long],
-                        dsts: Array[Long],
-                        sums: Array[Float],
-                        weights: Array[Float],
-                        keys: Array[Long]) extends Serializable {
+                        srcs: Array[Long], // src点
+                        dsts: Array[Long], // dst点
+                        sums: Array[Float], // src的权重之和
+                        weights: Array[Float], // 边权重
+                        keys: Array[Long] // src的去重vid
+                       ) extends Serializable {
   assert(srcs.length == dsts.length)
 
   def getIndex: Int = index
@@ -46,7 +47,7 @@ class PageRankPartition(index: Int,
 
     val update = VFactory.sparseLongKeyFloatVector(model.dim)
     update.setStorage(new LongFloatSparseVectorStorage(update.dim(), outMsgs))
-    model.sendMsgs(update)
+    model.sendMsgs(update)  // 更新writeMsg， 初始值
     outMsgs.size()
   }
 
@@ -81,7 +82,7 @@ class PageRankPartition(index: Int,
     }
   }
 
-  def setMissRanks(model: PageRankPSModel, initRanks: Float): Int = {
+  def setMissRanks(model: PageRankPSModel, initRanks: Float): Int = { // 把为0的也初始化一下，主要是没有入度的点
     if (srcs.length > 0) {
       val ranks = model.readRanks(keys)
       val update = ranks.emptyLike()
@@ -94,15 +95,15 @@ class PageRankPartition(index: Int,
     } else 0
   }
 
-  def calcWeightSums(model: PageRankPSModel): Int = {
+  def calcWeightSums(model: PageRankPSModel): Int = {  // 只是拿出所有的src的weight去重备份下
     val startMerge = System.currentTimeMillis()
     val update = new Long2FloatOpenHashMap(keys.length)
-    for (idx <- srcs.indices)
+    for (idx <- srcs.indices) // 同一个节点的权重累加
       update.addTo(srcs(idx), weights(idx))
     val mergeTime = System.currentTimeMillis() - startMerge
 
     val start = System.currentTimeMillis()
-    val msgs = VFactory.sparseLongKeyFloatVector(model.dim)
+    val msgs = VFactory.sparseLongKeyFloatVector(model.dim)  // 构造新的向量  更新参数
     msgs.setStorage(new LongFloatSparseVectorStorage(msgs.dim(), update))
     model.updateSums(msgs)
     val updateTime = System.currentTimeMillis() - start
@@ -110,7 +111,7 @@ class PageRankPartition(index: Int,
     msgs.size().toInt
   }
 
-  def toPartitionWithSum(model: PageRankPSModel): PageRankPartition = {
+  def toPartitionWithSum(model: PageRankPSModel): PageRankPartition = { // 然后给sum整理成全量的src weight值 ， 换成新的PageRankPartition
     val msgs = model.readSums(keys)
     val sums = new Array[Float](srcs.length)
     for (idx <- srcs.indices)

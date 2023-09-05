@@ -28,8 +28,8 @@ class LPAGraphPartition(index: Int,
                         neighbors: Array[Long]) {
   
   def initMsgs(model: LPAPSModel, batchSize: Int): Int = {
-    keys.indices.sliding(batchSize, batchSize).map{ iter =>
-      val msgs = VFactory.sparseLongKeyLongVector(iter.size)
+    keys.indices.sliding(batchSize, batchSize).map{ iter =>  // 分组
+      val msgs = VFactory.sparseLongKeyLongVector(iter.size) // 构造向量，大小是一个batchsize，两列一列为vid， 一列为lpaid
       iter.foreach(idx => msgs.set(keys(idx), keys(idx)))
       model.initMsgs(msgs)
       msgs.size().toInt
@@ -37,7 +37,7 @@ class LPAGraphPartition(index: Int,
   }
   
   def process(model: LPAPSModel, batchSize: Int): Long = {
-    var changedNum = 0L
+    var  changedNum = 0L
     var batchCnt = 0
     keys.indices.sliding(batchSize, batchSize).foreach{ iter =>
       val before = System.currentTimeMillis()
@@ -61,14 +61,14 @@ class LPAGraphPartition(index: Int,
     changedNum
   }
   
-  def calcLabel(idx: Int, inMsgs: LongLongVector): Long = {
+  def calcLabel(idx: Int, inMsgs: LongLongVector): Long = {  // 找新的label
     var j = indptr(idx)
     val labelCount = new Long2IntOpenHashMap()
     var (label, count) = (inMsgs.get(neighbors(j)), 1)
-    while (j < indptr(idx + 1)) {
-      val nbrLabel = inMsgs.get(neighbors(j))
+    while (j < indptr(idx + 1)) { // 遍历该点的所有邻居
+      val nbrLabel = inMsgs.get(neighbors(j)) // 邻居的label
       labelCount.addTo(nbrLabel, 1)
-      if (labelCount.get(nbrLabel) > count) {
+      if (labelCount.get(nbrLabel) > count) {  //取label出现最多次的作为自己的label
         label = nbrLabel
         count = labelCount.get(nbrLabel)
       }
@@ -89,10 +89,10 @@ class LPAGraphPartition(index: Int,
 object LPAGraphPartition {
   
   def apply(index: Int, iterator: Iterator[(Long, Iterable[Long])]): LPAGraphPartition = {
-    
-    val indptr = new IntArrayList()
-    val keys = new LongArrayList()
-    val neighbors = new LongArrayList()
+    // 这里应该是计算每个分区的邻接数组， 用两个数组来记录  一个记录位置  一个记录所有邻居
+    val indptr = new IntArrayList()  // 每次累加的邻居大小
+    val keys = new LongArrayList()  // 该part的节点集合
+    val neighbors = new LongArrayList()  // 所有节点的邻居
     
     indptr.add(0)
     while (iterator.hasNext) {

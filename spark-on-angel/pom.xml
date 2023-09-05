@@ -73,19 +73,19 @@
 			<groupId>com.tencent.angel</groupId>
 			<artifactId>angel-ps-core</artifactId>
 			<version>${project.version}</version>
-			<scope>${dist.deps.scope}</scope>
+<!--			<scope>${dist.deps.scope}</scope>-->
 		</dependency>
 		<dependency>
 			<groupId>com.tencent.angel</groupId>
 			<artifactId>angel-ps-graph</artifactId>
 			<version>${project.version}</version>
-			<scope>${dist.deps.scope}</scope>
+<!--			<scope>${dist.deps.scope}</scope>-->
 		</dependency>
 		<dependency>
 			<groupId>com.tencent.angel</groupId>
 			<artifactId>angel-ps-psf</artifactId>
 			<version>${project.version}</version>
-			<scope>${dist.deps.scope}</scope>
+<!--			<scope>${dist.deps.scope}</scope>-->
 		</dependency>
 		<dependency>
 			<groupId>org.scalatest</groupId>

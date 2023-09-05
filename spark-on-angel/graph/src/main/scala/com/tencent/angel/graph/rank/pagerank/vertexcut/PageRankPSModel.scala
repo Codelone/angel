@@ -32,10 +32,11 @@ private[vertexcut]
 class PageRankPSModel(readMsgs: PSVector,
                       writeMsgs: PSVector,
                       ranks: PSVector,
-                      sums: PSVector) extends PageRankModel(readMsgs, writeMsgs, ranks) {
+                      sums: PSVector // src点权重累加后的值
+                     ) extends PageRankModel(readMsgs, writeMsgs, ranks) {
 
   def updateSums(update: Vector): Unit = {
-    sums.increment(update)
+    sums.increment(update)  // 累加的
   }
 
   def readSums(keys: Array[Long]): LongFloatVector =

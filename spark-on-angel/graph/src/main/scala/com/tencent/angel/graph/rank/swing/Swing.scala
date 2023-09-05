@@ -117,7 +117,7 @@ class Swing(override val uid: String) extends Transformer
     }.count()
     println(s"initializing the neighbor table costs ${System.currentTimeMillis() - initTableStartTime} ms")
     val cpTableStartTime = System.currentTimeMillis()
-    psModel.checkpoint()
+//    psModel.checkpoint()
     println(s"checkpoint of neighbor table costs ${System.currentTimeMillis() - cpTableStartTime} ms")
 
     // start calculating

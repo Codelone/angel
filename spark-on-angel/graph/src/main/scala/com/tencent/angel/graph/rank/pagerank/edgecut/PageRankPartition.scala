@@ -26,10 +26,11 @@ import it.unimi.dsi.fastutil.longs.{Long2FloatOpenHashMap, LongArrayList}
 
 private[edgecut]
 class PageRankPartition(index: Int,
-                        keys: Array[Long], indptr: Array[Int],
-                        sums: Array[Float],
-                        outNodes: Array[Long],
-                        weights: Array[Float]) {
+                        keys: Array[Long],  // src 点
+                        indptr: Array[Int], // 相对 邻居节点数
+                        sums: Array[Float], // src点的累计权重
+                        outNodes: Array[Long], // 压缩邻接表
+                        weights: Array[Float]) { // 邻接表每个边的权重
 
   assert(keys.length == indptr.length - 1)
 
@@ -39,7 +40,7 @@ class PageRankPartition(index: Int,
     val outMsgs = new Long2FloatOpenHashMap()
     for (idx <- keys.indices) {
       val delta = rank
-      if (delta > tol) {
+      if (delta > tol) { // 计算每个dst点的rank值
         var j = indptr(idx)
         while (j < indptr(idx + 1)) {
           outMsgs.addTo(outNodes(j), delta * weights(j) / sums(idx))
@@ -50,7 +51,7 @@ class PageRankPartition(index: Int,
 
     val update = VFactory.sparseLongKeyFloatVector(model.dim)
     update.setStorage(new LongFloatSparseVectorStorage(update.dim(), outMsgs))
-    model.sendMsgs(update)
+    model.sendMsgs(update)  // 更新到writeMsg
     outMsgs.size()
   }
 
@@ -59,8 +60,8 @@ class PageRankPartition(index: Int,
     val outMsgs = new Long2FloatOpenHashMap()
     inMsgs = model.readMsgs(keys.clone())
     for (idx <- keys.indices) {
-      val delta = inMsgs.get(keys(idx)) * (1 - resetProb)
-      if (delta > tol) {
+      val delta = inMsgs.get(keys(idx)) //* (1 - resetProb)
+      if (delta > tol) { // 计算每个dst点的rank值
         var j = indptr(idx)
         while (j < indptr(idx + 1)) {
           outMsgs.addTo(outNodes(j), delta * weights(j) / sums(idx))

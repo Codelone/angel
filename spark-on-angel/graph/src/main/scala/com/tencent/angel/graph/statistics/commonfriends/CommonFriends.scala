@@ -84,9 +84,6 @@ class CommonFriends(override val uid: String) extends Transformer
     val psStartTime = System.currentTimeMillis()
     startPS(dataset.sparkSession.sparkContext)
     println(s"start parameter server costs ${System.currentTimeMillis() - psStartTime} ms")
-    // Start PS and init the model
-    Log.withTimePrintln("start to run ps")
-    PSContext.getOrCreate(SparkContext.getOrCreate())
     println(s"======push neighbor tables to parameter server======")
     val initTableStartTime = System.currentTimeMillis()
     val modelContext = new ModelContext($(psPartitionNum), stats._1, stats._2 + 1, stats._3,
@@ -102,7 +99,7 @@ class CommonFriends(override val uid: String) extends Transformer
 
     println(s"initializing the neighbor table costs ${System.currentTimeMillis() - initTableStartTime} ms")
     val cpTableStartTime = System.currentTimeMillis()
-    model.checkpoint()
+//    model.checkpoint()
     println(s"checkpoint of neighbor table costs ${System.currentTimeMillis() - cpTableStartTime} ms")
 
     NeighborDataOps.testPS(firstNeighbors, model, 10)

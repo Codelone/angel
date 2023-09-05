@@ -87,7 +87,7 @@ class IncComFriends(override val uid: String) extends Transformer
     psModel.initNeighbors(incEdges, ${batchSize})
     psModel.trans()
     val ckpStartTime = System.currentTimeMillis()
-    psModel.checkpoint()
+//    psModel.checkpoint()
     println(s"checkpoint cost ${System.currentTimeMillis() - ckpStartTime} ms.")
 
     // filter and save the unchanged edges, no deleted edges

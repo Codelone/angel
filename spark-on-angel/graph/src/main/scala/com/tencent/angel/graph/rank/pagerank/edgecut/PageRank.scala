@@ -136,7 +136,9 @@ class PageRank(override val uid: String) extends Transformer
           }
         }
       }.flatMap(p=>p)
+      .sortBy(_._2)
       .map { case (node, rank) => Row.fromSeq(Seq[Any](node, rank)) }
+
 
     val outputSchema = transformSchema(dataset.schema)
     dataset.sparkSession.createDataFrame(retRDD, outputSchema)

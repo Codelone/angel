@@ -91,8 +91,8 @@ class PageRank(override val uid: String) extends Transformer
     graph.persist($(storageLevel))
     graph.count()
 
-    graph.map(_.start(model, initRank, $(resetProb), $(tol))).reduce(_ + _)
-    model.computeRanks(initRank, $(resetProb))
+    graph.map(_.start(model, initRank, $(resetProb), $(tol))).reduce(_ + _)  // 准备阶段
+    model.computeRanks(initRank, $(resetProb))  // 合并最终rank值  没看懂怎么算的
 
     val nodesWithoutInLinks = graph.map(_.setMissRanks(model, initRank)).reduce(_ + _)
     val numNodes = model.numNodes()
@@ -106,15 +106,15 @@ class PageRank(override val uid: String) extends Transformer
     Log.withTimePrintln(s"numMsgs=$numMsgs")
 
     do {
-      graph.map(_.process(model, $(resetProb), $(tol), numMsgs)).reduce(_ + _)
-      model.computeRanks(initRank, $(resetProb))
+      graph.map(_.process(model, $(resetProb), $(tol), numMsgs)).reduce(_ + _)  // 进行计算rank 并增加矩阵行
+      model.computeRanks(initRank, $(resetProb)) // 合并rank值
       numMsgs = model.numMsgs()
       Log.withTimePrintln(s"PageRank finished iteration + $i, and the number of msg is $numMsgs")
       i += 1
     } while (numMsgs > 0)
 
     model.normalizeRanks(numNodes)
-
+    // 保存最终结果
     val batchs = math.max($(psPartitionNum) / $(numBatch), $(batchSize))
     val retRDD = edges.flatMap(f => Array(f._1, f._2))
       .map(key=> (key, 1))

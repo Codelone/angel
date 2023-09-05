@@ -110,7 +110,7 @@ class Closeness(override val uid: String) extends Transformer
 
     graph.map(_.init(model)).collect()
 
-    model.checkpoint()
+//    model.checkpoint()
     var r = 1
     var numActives = 1L
     do {
