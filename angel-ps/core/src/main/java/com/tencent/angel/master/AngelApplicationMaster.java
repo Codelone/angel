@@ -612,7 +612,7 @@ public class AngelApplicationMaster extends CompositeService {
       String nodePortString = System.getenv(Environment.NM_PORT.name());
       String nodeHttpPortString = System.getenv(Environment.NM_HTTP_PORT.name());
       String appSubmitTimeStr = System.getenv(ApplicationConstants.APP_SUBMIT_TIME_ENV);
-      String maxAppAttempts = System.getenv(ApplicationConstants.MAX_APP_ATTEMPTS_ENV);
+      String maxAppAttempts = "2";
 
       validateInputParam(containerIdStr, Environment.CONTAINER_ID.name());
       validateInputParam(nodeHostString, Environment.NM_HOST.name());
